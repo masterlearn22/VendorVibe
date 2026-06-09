@@ -2,6 +2,21 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { compareVendorsAI } from '../lib/gemini';
 import { Sparkles, Loader2, CheckSquare, Square } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+const MarkdownComponents: any = {
+  p: ({node, ...props}: any) => <p className="mb-4 text-justify leading-relaxed" {...props} />,
+  h3: ({node, ...props}: any) => <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3" {...props} />,
+  h4: ({node, ...props}: any) => <h4 className="text-base font-bold text-slate-800 mt-4 mb-2" {...props} />,
+  strong: ({node, ...props}: any) => <strong className="font-bold text-slate-900" {...props} />,
+  table: ({node, ...props}: any) => <div className="overflow-x-auto mb-6"><table className="w-full text-left border-collapse text-sm" {...props} /></div>,
+  th: ({node, ...props}: any) => <th className="bg-[#ff5a36]/5 text-[#ff5a36] font-semibold p-3 border-b border-[#ff5a36]/20 whitespace-nowrap" {...props} />,
+  td: ({node, ...props}: any) => <td className="p-3 border-b border-slate-100 text-slate-700 whitespace-nowrap" {...props} />,
+  ul: ({node, ...props}: any) => <ul className="list-disc pl-5 mb-4 space-y-1" {...props} />,
+  ol: ({node, ...props}: any) => <ol className="list-decimal pl-5 mb-4 space-y-1" {...props} />,
+  li: ({node, ...props}: any) => <li className="text-slate-700 text-justify" {...props} />,
+};
 
 interface VendorData {
   id: string;
@@ -18,21 +33,8 @@ interface VendorData {
 export default function AICompare() {
   const [vendors, setVendors] = useState<VendorData[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [recommendation, setRecommendation] = useState<string>('');
+  const [recommendation, setRecommendation] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const formatAIResponse = (text: string) => {
-    return text.split('\n').map((paragraph, pIndex) => (
-      <span key={pIndex} className="block mb-2 text-justify">
-        {paragraph.split(/(\*\*.*?\*\*)/g).map((part, index) => {
-          if (part.startsWith('**') && part.endsWith('**')) {
-            return <strong key={index} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
-          }
-          return <span key={index}>{part}</span>;
-        })}
-      </span>
-    ));
-  };
 
   useEffect(() => {
     async function fetchVendors() {
@@ -154,8 +156,12 @@ export default function AICompare() {
                       </div>
                       <div>
                         <p className="text-slate-500 mb-2 font-medium">AI Summary</p>
-                        <div className="text-slate-600 leading-relaxed text-sm">
-                          {p?.ai_summary ? formatAIResponse(p.ai_summary) : '-'}
+                        <div className="text-slate-600 text-sm">
+                          {p?.ai_summary ? (
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+                              {p.ai_summary}
+                            </ReactMarkdown>
+                          ) : '-'}
                         </div>
                       </div>
                     </div>
@@ -176,8 +182,10 @@ export default function AICompare() {
                 </div>
                 Rekomendasi Final AI
               </h3>
-              <div className="text-slate-700 leading-relaxed pl-12 text-lg">
-                {formatAIResponse(recommendation)}
+              <div className="text-slate-700 pl-2 lg:pl-12 text-base">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+                  {recommendation}
+                </ReactMarkdown>
               </div>
             </div>
           )}
