@@ -13,34 +13,47 @@ export interface ParsedProposal {
   ai_summary: string;
 }
 
-export async function analyzeProposalText(text: string): Promise<ParsedProposal> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  
-  const prompt = `
-    Analyze the following vendor proposal text and extract the key information.
-    Format your response ONLY as a raw JSON object (without markdown code blocks, just the JSON) adhering to this schema:
-    {
-      "vendor_name": "Name of the vendor",
-      "category": "Category of service (e.g. IT, Marketing, Construction)",
-      "offered_price": numeric value (e.g. 50000),
-      "duration_months": numeric value (estimated duration in months, e.g. 6),
-      "risk_status": "Low", "Medium", or "High" (based on your analysis of their proposal's feasibility, timeline, and completeness),
-      "risk_score": numeric value between 1 and 100 (where 1 is lowest risk and 100 is highest risk),
-      "ai_summary": "A 1-2 paragraph summary of their proposal strengths, weaknesses, and potential risks."
-    }
-    
-    If any information is missing, provide a reasonable guess or leave it as a default (e.g. 0 or "Unknown"). 
-    
-    Proposal Text:
-    ---
-    ${text}
-    ---
-  `;
+const FALLBACK_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-flash-latest',
+  'gemini-3.5-flash',
+  'gemini-pro-latest',
+  'gemini-2.5-pro'
+];
 
-  const result = await model.generateContent(prompt);
-  const response = result.response.text();
+async function generateWithFallback(contentPayload: any[] | string): Promise<string> {
+  let lastError: Error | null = null;
   
-  return parseGeminiResponse(response);
+  for (const modelName of FALLBACK_MODELS) {
+    try {
+      console.log(`Menghubungi Gemini AI menggunakan model: ${modelName}...`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      
+      const result = await model.generateContent(contentPayload);
+      return result.response.text();
+      
+    } catch (error: any) {
+      console.warn(`Model ${modelName} gagal:`, error.message);
+      lastError = error;
+      
+      // Jika error 503 (High Demand), 429 (Rate Limit), atau 404 (Not Found), lanjut ke model berikutnya
+      if (
+        error.message.includes('503') || 
+        error.message.includes('429') || 
+        error.message.includes('404') ||
+        error.message.includes('overloaded') ||
+        error.message.includes('exhausted')
+      ) {
+        continue;
+      }
+      
+      // Jika error lain (seperti API key salah), langsung throw
+      throw error;
+    }
+  }
+  
+  throw new Error(`Semua model AI sedang sibuk atau tidak tersedia. Error terakhir: ${lastError?.message}`);
 }
 
 // Helper to parse JSON safely
@@ -55,7 +68,7 @@ function parseGeminiResponse(response: string): ParsedProposal {
     return JSON.parse(cleanJson) as ParsedProposal;
   } catch (error) {
     console.error('Failed to parse Gemini response', error, response);
-    throw new Error('Failed to parse proposal data.');
+    throw new Error('Gagal memproses data JSON dari AI. Silakan coba lagi.');
   }
 }
 
@@ -72,7 +85,6 @@ async function fileToGenerativePart(file: File) {
 }
 
 export async function analyzeProposalFile(file: File): Promise<ParsedProposal> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
   const filePart = await fileToGenerativePart(file);
 
   const prompt = `
@@ -91,14 +103,11 @@ export async function analyzeProposalFile(file: File): Promise<ParsedProposal> {
     If any information is missing, provide a reasonable guess or leave it as a default (e.g. 0 or "Unknown"). 
   `;
 
-  const result = await model.generateContent([prompt, filePart]);
-  const response = result.response.text();
-  
-  return parseGeminiResponse(response);
+  const responseText = await generateWithFallback([prompt, filePart]);
+  return parseGeminiResponse(responseText);
 }
 
 export async function compareVendorsAI(vendorDataString: string): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
   const prompt = `
     You are an expert procurement analyst. Compare the following vendors based on their proposals, risk scores, duration, and prices.
     Provide a concise (1-2 paragraphs) final recommendation on which vendor is the best option for the company.
@@ -107,6 +116,5 @@ export async function compareVendorsAI(vendorDataString: string): Promise<string
     ${vendorDataString}
   `;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  return await generateWithFallback(prompt);
 }
