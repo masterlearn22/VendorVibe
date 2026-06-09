@@ -6,6 +6,7 @@ import { UploadCloud, FileText, Loader2, AlertCircle, Sparkles } from 'lucide-re
 
 export default function UploadProposal() {
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [status, setStatus] = useState<'idle' | 'analyzing' | 'saving' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
@@ -15,6 +16,31 @@ export default function UploadProposal() {
       setFile(e.target.files[0]);
       setStatus('idle');
       setErrorMessage('');
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile.type === 'application/pdf' || droppedFile.type === 'text/plain') {
+        setFile(droppedFile);
+        setStatus('idle');
+        setErrorMessage('');
+      } else {
+        setErrorMessage('Format file tidak didukung. Harap unggah PDF atau TXT.');
+      }
     }
   };
 
@@ -40,6 +66,23 @@ export default function UploadProposal() {
 
       if (vendorError) throw vendorError;
 
+      // Upload file to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('proposals')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error("Storage Error:", uploadError);
+        throw new Error("Gagal mengunggah file ke penyimpanan.");
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('proposals')
+        .getPublicUrl(fileName);
+
       const { error: proposalError } = await supabase
         .from('proposals')
         .insert({
@@ -48,6 +91,7 @@ export default function UploadProposal() {
           duration_months: parsedData.duration_months,
           risk_score: parsedData.risk_score,
           ai_summary: parsedData.ai_summary,
+          file_url: publicUrl
         });
 
       if (proposalError) throw proposalError;
@@ -79,9 +123,15 @@ export default function UploadProposal() {
           
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Pilih File Proposal</label>
-            <div className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
-              file ? 'border-[#ff5a36] bg-[#ff5a36]/5' : 'border-slate-200 hover:border-[#ff5a36]/50 bg-slate-50'
-            }`}>
+            <div 
+              className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 ${
+                isDragging ? 'border-[#ff5a36] bg-[#ff5a36]/10 scale-[1.02]' :
+                file ? 'border-[#ff5a36] bg-[#ff5a36]/5' : 'border-slate-200 hover:border-[#ff5a36]/50 bg-slate-50'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <input
                 type="file"
                 id="file-upload"
@@ -89,12 +139,12 @@ export default function UploadProposal() {
                 accept=".txt,.pdf"
                 onChange={handleFileChange}
               />
-              <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
-                <FileText className={`w-12 h-12 mb-3 ${file ? 'text-[#ff5a36]' : 'text-slate-300'}`} />
+              <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center w-full h-full">
+                <FileText className={`w-12 h-12 mb-3 transition-colors ${file || isDragging ? 'text-[#ff5a36]' : 'text-slate-300'}`} />
                 {file ? (
                   <span className="text-[#ff5a36] font-medium">{file.name}</span>
                 ) : (
-                  <span className="text-slate-500">Klik untuk memilih file (.txt, .pdf)</span>
+                  <span className="text-slate-500">Klik atau seret file ke area ini (.txt, .pdf)</span>
                 )}
               </label>
             </div>
