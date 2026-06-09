@@ -96,3 +96,17 @@ export async function analyzeProposalFile(file: File): Promise<ParsedProposal> {
   
   return parseGeminiResponse(response);
 }
+
+export async function compareVendorsAI(vendorDataString: string): Promise<string> {
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const prompt = `
+    You are an expert procurement analyst. Compare the following vendors based on their proposals, risk scores, duration, and prices.
+    Provide a concise (1-2 paragraphs) final recommendation on which vendor is the best option for the company.
+    
+    Vendor Data:
+    ${vendorDataString}
+  `;
+
+  const result = await model.generateContent(prompt);
+  return result.response.text();
+}
