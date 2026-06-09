@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Building2, Loader2, FileText } from 'lucide-react';
+import { Building2, FileText, Upload } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface VendorData {
   id: string;
@@ -61,14 +62,42 @@ export default function VendorDirectory() {
         </div>
         
         {loading ? (
-          <div className="flex justify-center items-center p-20">
-            <Loader2 className="h-8 w-8 text-orange-500 animate-spin" />
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-50/50 text-slate-500 text-sm">
+                <tr>
+                  <th className="px-6 py-4 font-medium">Nama Vendor</th>
+                  <th className="px-6 py-4 font-medium">Kategori</th>
+                  <th className="px-6 py-4 font-medium">Penawaran</th>
+                  <th className="px-6 py-4 font-medium">Durasi</th>
+                  <th className="px-6 py-4 font-medium">Skor Risiko</th>
+                  <th className="px-6 py-4 font-medium">Status</th>
+                  <th className="px-6 py-4 font-medium text-center">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-3/4"></div></td>
+                    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-1/2"></div></td>
+                    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-full"></div></td>
+                    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-1/3"></div></td>
+                    <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-1/2"></div></td>
+                    <td className="px-6 py-4"><div className="h-6 bg-slate-200 rounded-full w-16"></div></td>
+                    <td className="px-6 py-4 flex justify-center"><div className="h-8 w-8 bg-slate-200 rounded-full"></div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : vendors.length === 0 ? (
-          <div className="text-center p-20">
-            <FileText className="mx-auto h-12 w-12 text-slate-300 mb-4" />
+          <div className="text-center p-20 flex flex-col items-center">
+            <FileText className="h-12 w-12 text-slate-300 mb-4" />
             <h3 className="text-lg font-medium text-slate-800">Belum ada vendor</h3>
-            <p className="text-slate-500 mt-1">Silakan unggah proposal vendor terlebih dahulu di menu Upload Proposal.</p>
+            <p className="text-slate-500 mt-1 mb-6">Mulai bangun database pengadaan Anda dengan mengunggah proposal pertama.</p>
+            <Link to="/upload" className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full text-white bg-[#ff5a36] hover:bg-orange-600 transition-colors shadow-sm shadow-orange-500/30">
+              <Upload className="w-5 h-5 mr-2" /> Mulai Unggah Proposal
+            </Link>
           </div>
         ) : (
           <div className="overflow-x-auto">

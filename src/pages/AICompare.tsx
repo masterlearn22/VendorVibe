@@ -4,6 +4,7 @@ import { compareVendorsAI } from '../lib/gemini';
 import { Sparkles, Loader2, CheckSquare, Square } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Link } from 'react-router-dom';
 
 const MarkdownComponents: any = {
   p: ({node, ...props}: any) => <p className="mb-4 text-justify leading-relaxed" {...props} />,
@@ -101,23 +102,32 @@ export default function AICompare() {
         <div className="lg:col-span-1 bg-white border border-slate-100 rounded-[2rem] p-8 shadow-sm h-fit">
           <h3 className="font-semibold text-slate-800 mb-6">Pilih Vendor (Max 3)</h3>
           <div className="space-y-3 mb-8 max-h-96 overflow-y-auto pr-2">
-            {vendors.map(v => (
-              <div 
-                key={v.id} 
-                onClick={() => toggleSelection(v.id)}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start ${selectedIds.has(v.id) ? 'bg-[#ff5a36]/5 border-[#ff5a36]/30 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'}`}
-              >
-                {selectedIds.has(v.id) ? (
-                  <CheckSquare className="h-5 w-5 text-[#ff5a36] mt-0.5 mr-3 shrink-0" />
-                ) : (
-                  <Square className="h-5 w-5 text-slate-300 mt-0.5 mr-3 shrink-0" />
-                )}
-                <div>
-                  <p className={`font-semibold text-sm ${selectedIds.has(v.id) ? 'text-slate-800' : 'text-slate-600'}`}>{v.name}</p>
-                  <p className="text-xs text-slate-500 mt-1">Skor Risiko: {v.proposals?.[0]?.risk_score || '-'}</p>
-                </div>
+            {vendors.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-slate-500 mb-4 text-sm">Belum ada vendor yang bisa dibandingkan.</p>
+                <Link to="/upload" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-full text-white bg-[#ff5a36] hover:bg-orange-600 transition-colors shadow-sm">
+                  Unggah Proposal
+                </Link>
               </div>
-            ))}
+            ) : (
+              vendors.map(v => (
+                <div 
+                  key={v.id} 
+                  onClick={() => toggleSelection(v.id)}
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start ${selectedIds.has(v.id) ? 'bg-[#ff5a36]/5 border-[#ff5a36]/30 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'}`}
+                >
+                  {selectedIds.has(v.id) ? (
+                    <CheckSquare className="h-5 w-5 text-[#ff5a36] mt-0.5 mr-3 shrink-0" />
+                  ) : (
+                    <Square className="h-5 w-5 text-slate-300 mt-0.5 mr-3 shrink-0" />
+                  )}
+                  <div>
+                    <p className={`font-semibold text-sm ${selectedIds.has(v.id) ? 'text-slate-800' : 'text-slate-600'}`}>{v.name}</p>
+                    <p className="text-xs text-slate-500 mt-1">Skor Risiko: {v.proposals?.[0]?.risk_score || '-'}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
           
           <button
