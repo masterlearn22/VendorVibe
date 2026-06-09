@@ -18,8 +18,21 @@ interface VendorData {
 export default function AICompare() {
   const [vendors, setVendors] = useState<VendorData[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [recommendation, setRecommendation] = useState<string | null>(null);
+  const [recommendation, setRecommendation] = useState<string>('');
   const [loading, setLoading] = useState(false);
+
+  const formatAIResponse = (text: string) => {
+    return text.split('\n').map((paragraph, pIndex) => (
+      <span key={pIndex} className="block mb-2 text-justify">
+        {paragraph.split(/(\*\*.*?\*\*)/g).map((part, index) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={index} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
+          }
+          return <span key={index}>{part}</span>;
+        })}
+      </span>
+    ));
+  };
 
   useEffect(() => {
     async function fetchVendors() {
@@ -141,7 +154,9 @@ export default function AICompare() {
                       </div>
                       <div>
                         <p className="text-slate-500 mb-2 font-medium">AI Summary</p>
-                        <p className="text-slate-600 leading-relaxed text-sm">{p?.ai_summary || '-'}</p>
+                        <div className="text-slate-600 leading-relaxed text-sm">
+                          {p?.ai_summary ? formatAIResponse(p.ai_summary) : '-'}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -161,8 +176,8 @@ export default function AICompare() {
                 </div>
                 Rekomendasi Final AI
               </h3>
-              <div className="text-slate-700 leading-relaxed whitespace-pre-wrap pl-12 text-lg">
-                {recommendation}
+              <div className="text-slate-700 leading-relaxed pl-12 text-lg">
+                {formatAIResponse(recommendation)}
               </div>
             </div>
           )}
