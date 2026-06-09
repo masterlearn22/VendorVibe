@@ -22,11 +22,11 @@ export function DashboardLayout() {
   ];
 
   const sideIcons = [
-    { icon: MessageSquare, id: 'msg' },
-    { icon: Flag, id: 'flag' },
-    { icon: AlertCircle, id: 'alert' },
-    { icon: DollarSign, id: 'dollar' },
-    { icon: Menu, id: 'menu' },
+    { icon: MessageSquare, id: 'msg', path: '/messages' },
+    { icon: Flag, id: 'flag', path: '/priority' },
+    { icon: AlertCircle, id: 'alert', path: '/alerts' },
+    { icon: DollarSign, id: 'dollar', path: '/financials' },
+    { icon: Menu, id: 'menu', path: '/settings' },
   ];
 
   return (
@@ -73,11 +73,22 @@ export function DashboardLayout() {
           
           {/* Left Mini Sidebar for Icons */}
           <div className="hidden md:flex flex-col items-center gap-6 pr-6 pt-8 w-20 shrink-0">
-            {sideIcons.map((item) => (
-              <button key={item.id} className="w-12 h-12 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-[#ff5a36] hover:shadow-sm border border-slate-100 transition-all">
-                <item.icon className="w-5 h-5" />
-              </button>
-            ))}
+            {sideIcons.map((item) => {
+              const isActive = location.pathname.startsWith(item.path);
+              return (
+                <Link 
+                  key={item.id} 
+                  to={item.path}
+                  className={`w-12 h-12 flex items-center justify-center rounded-full transition-all border ${
+                    isActive 
+                      ? 'bg-[#ff5a36] text-white border-[#ff5a36] shadow-md shadow-orange-500/20' 
+                      : 'bg-white text-slate-400 hover:text-[#ff5a36] hover:shadow-sm border-slate-100'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                </Link>
+              );
+            })}
           </div>
 
           {/* Page Content */}

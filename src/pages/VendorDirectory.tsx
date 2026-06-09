@@ -7,6 +7,7 @@ interface VendorData {
   name: string;
   category: string | null;
   risk_status: string;
+  is_flagged: boolean;
   proposals: {
     offered_price: number;
     duration_months: number;
@@ -32,6 +33,17 @@ export default function VendorDirectory() {
 
     fetchVendors();
   }, []);
+
+  const toggleFlag = async (vendorId: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from('vendors')
+      .update({ is_flagged: !currentStatus })
+      .eq('id', vendorId);
+    
+    if (!error) {
+      setVendors(vendors.map(v => v.id === vendorId ? { ...v, is_flagged: !currentStatus } : v));
+    }
+  };
 
   return (
     <div>
@@ -69,6 +81,7 @@ export default function VendorDirectory() {
                   <th className="px-6 py-4 font-medium">Durasi</th>
                   <th className="px-6 py-4 font-medium">Skor Risiko</th>
                   <th className="px-6 py-4 font-medium">Status</th>
+                  <th className="px-6 py-4 font-medium text-center">Tindakan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -95,6 +108,17 @@ export default function VendorDirectory() {
                         }`}>
                           {v.risk_status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 align-top text-center">
+                        <button 
+                          onClick={() => toggleFlag(v.id, v.is_flagged)}
+                          className={`p-2 rounded-full transition-colors ${
+                            v.is_flagged ? 'text-[#ff5a36] bg-[#ff5a36]/10' : 'text-slate-300 hover:bg-slate-100 hover:text-slate-500'
+                          }`}
+                          title={v.is_flagged ? "Hapus dari prioritas" : "Tandai sebagai prioritas"}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={v.is_flagged ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                        </button>
                       </td>
                     </tr>
                   );
