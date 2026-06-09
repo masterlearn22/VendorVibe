@@ -1,10 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Outfit", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
+  html {
+    font-size: 17px;
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 47.4% 11.2%;
