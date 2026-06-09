@@ -10,7 +10,7 @@ export default function Messages() {
 
   useEffect(() => {
     async function fetchVendors() {
-      const { data } = await supabase.from('vendors').select('id, name');
+      const { data } = await supabase.from('vendors').select('id, name, risk_status').in('risk_status', ['Low', 'Medium']);
       if (data) setVendors(data);
     }
     fetchVendors();
@@ -77,37 +77,58 @@ export default function Messages() {
         </div>
 
         {/* Right Side: Chat Area */}
-        <div className="w-full md:w-2/3 flex flex-col bg-white">
+        <div className="w-full md:w-2/3 flex flex-col bg-[#efeae2] relative">
+          {/* Subtle chat background pattern */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+          
           {!selectedVendorId ? (
-            <div className="flex-1 flex items-center justify-center text-slate-400">
-              <p>Pilih vendor di sebelah kiri untuk melihat catatan.</p>
+            <div className="flex-1 flex items-center justify-center relative z-10">
+              <div className="bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm text-slate-500 text-sm">
+                Pilih vendor di sebelah kiri untuk melihat obrolan.
+              </div>
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {notes.map(n => (
-                  <div key={n.id} className="bg-slate-50 p-4 rounded-2xl rounded-tl-sm border border-slate-100 max-w-[85%]">
-                    <p className="text-slate-700 text-sm">{n.message}</p>
-                    <p className="text-xs text-slate-400 mt-2">{new Date(n.created_at).toLocaleString('id-ID')}</p>
-                  </div>
-                ))}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 relative z-10 flex flex-col">
+                {notes.map((n) => {
+                  const time = new Date(n.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                  return (
+                    <div key={n.id} className="flex justify-end animate-in fade-in slide-in-from-bottom-2">
+                      <div className="bg-[#d9fdd3] p-3 rounded-2xl rounded-tr-sm shadow-sm max-w-[85%] relative min-w-[120px]">
+                        <p className="text-[#111b21] text-[15px] leading-relaxed pb-3">{n.message}</p>
+                        <span className="text-[11px] text-emerald-700/80 absolute bottom-1.5 right-3 font-medium">{time}</span>
+                      </div>
+                    </div>
+                  );
+                })}
                 {notes.length === 0 && (
-                  <div className="text-center text-slate-400 mt-10">Belum ada catatan untuk vendor ini.</div>
+                  <div className="flex justify-center mt-10">
+                    <div className="bg-[#fcebb6] px-4 py-2 rounded-xl shadow-sm text-slate-700 text-sm text-center">
+                      🔒 Pesan ini terenkripsi secara end-to-end.<br/>Mulai diskusikan evaluasi vendor ini!
+                    </div>
+                  </div>
                 )}
               </div>
-              <div className="p-4 border-t border-slate-100 bg-white">
-                <form onSubmit={handleSend} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Tulis catatan..."
-                    className="flex-1 border border-slate-200 rounded-full px-5 py-2.5 outline-none focus:border-[#ff5a36] focus:ring-1 focus:ring-[#ff5a36]"
-                  />
-                  <button type="submit" disabled={!newMessage.trim()} className="bg-[#ff5a36] text-white p-2.5 rounded-full hover:bg-orange-600 transition-colors disabled:opacity-50">
-                    <Send className="w-5 h-5" />
-                  </button>
-                </form>
+              <div className="p-3 bg-[#f0f2f5] relative z-10 flex items-end gap-2">
+                <textarea
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Ketik pesan..."
+                  className="flex-1 bg-white border-none rounded-2xl px-5 py-3.5 outline-none focus:ring-0 resize-none h-[52px] max-h-[150px] shadow-sm text-[15px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend(e as any);
+                    }
+                  }}
+                />
+                <button 
+                  onClick={handleSend} 
+                  disabled={!newMessage.trim()} 
+                  className="bg-[#00a884] text-white p-3 h-[52px] w-[52px] rounded-full hover:bg-[#008f6f] transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center shrink-0"
+                >
+                  <Send className="w-5 h-5 ml-1" />
+                </button>
               </div>
             </>
           )}
