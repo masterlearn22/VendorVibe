@@ -78,27 +78,27 @@ export default function AICompare() {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-50">AI Compare</h2>
-        <p className="text-slate-400 mt-2">Pilih 2 hingga 3 vendor untuk dibandingkan dan dapatkan rekomendasi terbaik dari Gemini AI.</p>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-800">AI Compare</h2>
+        <p className="text-slate-500 mt-2">Pilih 2 hingga 3 vendor untuk dibandingkan dan dapatkan rekomendasi terbaik dari Gemini AI.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm h-fit">
-          <h3 className="font-medium text-slate-200 mb-4">Pilih Vendor (Max 3)</h3>
-          <div className="space-y-3 mb-6 max-h-96 overflow-y-auto pr-2">
+        <div className="lg:col-span-1 bg-white border border-slate-100 rounded-[2rem] p-8 shadow-sm h-fit">
+          <h3 className="font-semibold text-slate-800 mb-6">Pilih Vendor (Max 3)</h3>
+          <div className="space-y-3 mb-8 max-h-96 overflow-y-auto pr-2">
             {vendors.map(v => (
               <div 
                 key={v.id} 
                 onClick={() => toggleSelection(v.id)}
-                className={`p-3 rounded-lg border cursor-pointer transition-colors flex items-start ${selectedIds.has(v.id) ? 'bg-indigo-500/10 border-indigo-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-600'}`}
+                className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start ${selectedIds.has(v.id) ? 'bg-[#ff5a36]/5 border-[#ff5a36]/30 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'}`}
               >
                 {selectedIds.has(v.id) ? (
-                  <CheckSquare className="h-5 w-5 text-indigo-400 mt-0.5 mr-3 shrink-0" />
+                  <CheckSquare className="h-5 w-5 text-[#ff5a36] mt-0.5 mr-3 shrink-0" />
                 ) : (
-                  <Square className="h-5 w-5 text-slate-600 mt-0.5 mr-3 shrink-0" />
+                  <Square className="h-5 w-5 text-slate-300 mt-0.5 mr-3 shrink-0" />
                 )}
                 <div>
-                  <p className={`font-medium text-sm ${selectedIds.has(v.id) ? 'text-indigo-200' : 'text-slate-300'}`}>{v.name}</p>
+                  <p className={`font-semibold text-sm ${selectedIds.has(v.id) ? 'text-slate-800' : 'text-slate-600'}`}>{v.name}</p>
                   <p className="text-xs text-slate-500 mt-1">Skor Risiko: {v.proposals?.[0]?.risk_score || '-'}</p>
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default function AICompare() {
           <button
             onClick={handleCompare}
             disabled={selectedIds.size < 2 || loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 flex justify-center items-center"
+            className="w-full bg-[#ff5a36] hover:bg-[#e04a29] text-white py-3.5 rounded-2xl font-semibold shadow-md shadow-orange-500/20 transition-all disabled:opacity-50 flex justify-center items-center"
           >
             {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><Sparkles className="h-4 w-4 mr-2" /> Bandingkan via AI</>}
           </button>
@@ -120,28 +120,28 @@ export default function AICompare() {
               {selectedVendorsList.map(v => {
                 const p = v.proposals?.[0];
                 return (
-                  <div key={v.id} className="bg-slate-900 border border-slate-700 rounded-xl p-6 shadow-sm relative overflow-hidden">
-                    <div className={`absolute top-0 left-0 w-full h-1 ${v.risk_status === 'Low' ? 'bg-emerald-400' : v.risk_status === 'Medium' ? 'bg-amber-400' : 'bg-rose-400'}`} />
-                    <h4 className="text-lg font-bold text-slate-50 mb-4">{v.name}</h4>
+                  <div key={v.id} className="bg-white border border-slate-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden flex flex-col">
+                    <div className={`absolute top-0 left-0 w-full h-1.5 ${v.risk_status === 'Low' ? 'bg-[#facc15]' : v.risk_status === 'Medium' ? 'bg-[#fb923c]' : 'bg-[#f97316]'}`} />
+                    <h4 className="text-xl font-bold text-slate-800 mb-6">{v.name}</h4>
                     
-                    <div className="space-y-4 text-sm">
+                    <div className="space-y-6 text-sm flex-1">
                       <div>
-                        <p className="text-slate-400 mb-1">Harga Penawaran</p>
-                        <p className="font-mono text-lg font-semibold text-slate-200">{p?.offered_price ? formatPrice(p.offered_price) : '-'}</p>
+                        <p className="text-slate-500 mb-1 font-medium">Harga Penawaran</p>
+                        <p className="font-mono text-xl font-bold text-slate-800">{p?.offered_price ? formatPrice(p.offered_price) : '-'}</p>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between p-4 bg-slate-50 rounded-2xl">
                         <div>
-                          <p className="text-slate-400 mb-1">Durasi</p>
-                          <p className="font-medium text-slate-200">{p?.duration_months || '-'} Bulan</p>
+                          <p className="text-slate-500 mb-1 font-medium">Durasi</p>
+                          <p className="font-semibold text-slate-800">{p?.duration_months || '-'} Bulan</p>
                         </div>
-                        <div>
-                          <p className="text-slate-400 mb-1">Skor Risiko</p>
-                          <p className="font-medium text-slate-200">{p?.risk_score || '-'} / 100</p>
+                        <div className="text-right">
+                          <p className="text-slate-500 mb-1 font-medium">Skor Risiko</p>
+                          <p className="font-semibold text-slate-800">{p?.risk_score || '-'} / 100</p>
                         </div>
                       </div>
                       <div>
-                        <p className="text-slate-400 mb-1">AI Summary</p>
-                        <p className="text-slate-300 leading-relaxed text-xs">{p?.ai_summary || '-'}</p>
+                        <p className="text-slate-500 mb-2 font-medium">AI Summary</p>
+                        <p className="text-slate-600 leading-relaxed text-sm">{p?.ai_summary || '-'}</p>
                       </div>
                     </div>
                   </div>
@@ -151,24 +151,28 @@ export default function AICompare() {
           )}
 
           {recommendation && (
-            <div className="bg-indigo-950/30 border border-indigo-500/30 rounded-xl p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-4 -mr-4 opacity-10 pointer-events-none">
-                <Sparkles className="h-32 w-32 text-indigo-400" />
+            <div className="bg-gradient-to-br from-orange-50 to-white border border-orange-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 opacity-[0.03] pointer-events-none">
+                <Sparkles className="h-48 w-48 text-[#ff5a36]" />
               </div>
-              <h3 className="text-xl font-bold text-indigo-200 mb-4 flex items-center">
-                <Sparkles className="h-5 w-5 mr-2 text-indigo-400" />
+              <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <div className="bg-[#ff5a36] text-white p-2 rounded-xl mr-3 shadow-sm">
+                  <Sparkles className="h-5 w-5" />
+                </div>
                 Rekomendasi Final AI
               </h3>
-              <div className="text-slate-200 leading-relaxed whitespace-pre-wrap">
+              <div className="text-slate-700 leading-relaxed whitespace-pre-wrap pl-12 text-lg">
                 {recommendation}
               </div>
             </div>
           )}
           
           {!recommendation && selectedVendorsList.length === 0 && (
-             <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 flex flex-col items-center justify-center text-center h-full min-h-[300px]">
-               <Sparkles className="h-12 w-12 text-slate-600 mb-4" />
-               <p className="text-slate-400">Pilih vendor di samping untuk mulai membandingkan performa mereka.</p>
+             <div className="bg-white/50 border border-slate-200/50 rounded-[2rem] p-12 flex flex-col items-center justify-center text-center h-full min-h-[400px]">
+               <div className="bg-slate-100 p-6 rounded-full mb-6">
+                 <Sparkles className="h-12 w-12 text-slate-300" />
+               </div>
+               <p className="text-slate-500 text-lg">Pilih vendor di samping untuk mulai membandingkan performa mereka.</p>
              </div>
           )}
         </div>

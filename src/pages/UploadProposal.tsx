@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { analyzeProposalFile } from '../lib/gemini';
-import { UploadCloud, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { UploadCloud, FileText, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 
 export default function UploadProposal() {
   const [file, setFile] = useState<File | null>(null);
@@ -11,106 +11,119 @@ export default function UploadProposal() {
   const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
+    if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
+      setStatus('idle');
+      setErrorMessage('');
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!file) return;
+
     try {
       setStatus('analyzing');
-      setErrorMessage('');
-      
-      // 1. Analyze with Gemini
-      const extractedData = await analyzeProposalFile(file);
-      
-      setStatus('saving');
+      const parsedData = await analyzeProposalFile(file);
 
-      // 2. Insert into Vendors table
+      setStatus('saving');
+      
       const { data: vendorData, error: vendorError } = await supabase
         .from('vendors')
-        .insert([{
-          name: extractedData.vendor_name,
-          category: extractedData.category,
-          risk_status: extractedData.risk_status
-        }])
+        .insert({
+          name: parsedData.vendor_name,
+          category: parsedData.category,
+          risk_status: parsedData.risk_status,
+        })
         .select()
         .single();
 
       if (vendorError) throw vendorError;
 
-      // 3. Insert into Proposals table
       const { error: proposalError } = await supabase
         .from('proposals')
-        .insert([{
+        .insert({
           vendor_id: vendorData.id,
-          file_url: file.name, // In a real app, upload file to Storage and save URL
-          offered_price: extractedData.offered_price,
-          duration_months: extractedData.duration_months,
-          ai_summary: extractedData.ai_summary,
-          risk_score: extractedData.risk_score
-        }]);
+          offered_price: parsedData.offered_price,
+          duration_months: parsedData.duration_months,
+          risk_score: parsedData.risk_score,
+          ai_summary: parsedData.ai_summary,
+        });
 
       if (proposalError) throw proposalError;
 
       setStatus('success');
       setTimeout(() => {
         navigate('/vendors');
-      }, 2000);
+      }, 1500);
 
-    } catch (err: any) {
-      console.error(err);
+    } catch (error: any) {
+      console.error(error);
       setStatus('error');
-      setErrorMessage(err.message || 'Terjadi kesalahan saat memproses proposal.');
+      setErrorMessage(error.message || 'Terjadi kesalahan saat memproses file.');
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-10">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-50">Upload Proposal</h2>
-        <p className="text-slate-400 mt-2">Unggah dokumen proposal PDF vendor untuk diekstraksi otomatis menggunakan AI.</p>
+    <div className="max-w-2xl mx-auto mt-8">
+      <div className="mb-8 text-center">
+        <div className="bg-orange-100 text-orange-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <UploadCloud className="w-8 h-8" />
+        </div>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-800">Upload Proposal</h2>
+        <p className="text-slate-500 mt-2">Unggah file proposal dari vendor untuk dianalisis oleh AI secara otomatis.</p>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-sm">
-        <div 
-          className="border-2 border-dashed border-slate-700 rounded-lg p-12 text-center hover:border-indigo-500 transition-colors cursor-pointer relative"
-        >
-          <input 
-            type="file" 
-            accept="application/pdf, text/plain" 
-            onChange={handleFileChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            disabled={status === 'analyzing' || status === 'saving'}
-          />
-          <UploadCloud className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-          <p className="text-slate-200 font-medium mb-1">
-            {file ? file.name : "Klik atau seret file ke area ini"}
-          </p>
-          <p className="text-slate-500 text-sm">Mendukung PDF dan TXT (Maks. 10MB)</p>
-        </div>
-
-        {status === 'error' && (
-          <div className="mt-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-start text-rose-400">
-            <AlertCircle className="h-5 w-5 mr-3 shrink-0 mt-0.5" />
-            <p className="text-sm">{errorMessage}</p>
+      <div className="bg-white border border-slate-100 rounded-[2rem] p-8 shadow-sm">
+        <form onSubmit={handleUpload} className="space-y-6">
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Pilih File Proposal</label>
+            <div className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
+              file ? 'border-[#ff5a36] bg-[#ff5a36]/5' : 'border-slate-200 hover:border-[#ff5a36]/50 bg-slate-50'
+            }`}>
+              <input
+                type="file"
+                id="file-upload"
+                className="hidden"
+                accept=".txt,.pdf"
+                onChange={handleFileChange}
+              />
+              <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
+                <FileText className={`w-12 h-12 mb-3 ${file ? 'text-[#ff5a36]' : 'text-slate-300'}`} />
+                {file ? (
+                  <span className="text-[#ff5a36] font-medium">{file.name}</span>
+                ) : (
+                  <span className="text-slate-500">Klik untuk memilih file (.txt, .pdf)</span>
+                )}
+              </label>
+            </div>
           </div>
-        )}
 
-        <div className="mt-8 flex items-center justify-end">
           <button
-            onClick={handleUpload}
+            type="submit"
             disabled={!file || status === 'analyzing' || status === 'saving' || status === 'success'}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center"
+            className="w-full bg-[#ff5a36] hover:bg-[#e04a29] text-white py-3.5 rounded-2xl font-semibold shadow-md shadow-orange-500/20 transition-all disabled:opacity-50 flex justify-center items-center"
           >
-            {status === 'analyzing' && <><Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" /> AI Menganalisis...</>}
-            {status === 'saving' && <><Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" /> Menyimpan Database...</>}
-            {status === 'success' && <><CheckCircle2 className="-ml-1 mr-2 h-4 w-4 text-emerald-400" /> Berhasil!</>}
+            {status === 'analyzing' || status === 'saving' ? (
+              <Loader2 className="animate-spin h-5 w-5 mr-2" />
+            ) : (
+              <Sparkles className="h-5 w-5 mr-2" />
+            )}
             {status === 'idle' && 'Mulai Proses AI'}
+            {status === 'analyzing' && 'AI Menganalisis...'}
+            {status === 'saving' && 'Menyimpan Database...'}
+            {status === 'success' && 'Berhasil! Mengalihkan...'}
             {status === 'error' && 'Coba Lagi'}
           </button>
-        </div>
+          
+          {errorMessage && (
+            <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-sm flex items-start">
+              <AlertCircle className="w-5 h-5 mr-2 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+        </form>
       </div>
     </div>
   );
