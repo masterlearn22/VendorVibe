@@ -96,7 +96,7 @@ export async function analyzeProposalFile(file: File): Promise<ParsedProposal> {
       "duration_months": numeric value (estimated duration in months, e.g. 6),
       "risk_status": "Low", "Medium", or "High" (based on your analysis of their proposal's feasibility, timeline, and completeness),
       "risk_score": numeric value between 1 and 100 (where 1 is lowest risk and 100 is highest risk),
-      "ai_summary": "A 1-2 paragraph summary of their proposal strengths, weaknesses, and potential risks."
+      "ai_summary": "A 1-2 paragraph summary of their proposal strengths, weaknesses, and potential risks. MUST BE WRITTEN IN INDONESIAN LANGUAGE (BAHASA INDONESIA)."
     }
     
     If any information is missing, provide a reasonable guess or leave it as a default (e.g. 0 or "Unknown"). 
@@ -110,6 +110,7 @@ export async function compareVendorsAI(vendorDataString: string): Promise<string
   const prompt = `
     You are an expert procurement analyst. Compare the following vendors based on their proposals, risk scores, duration, and prices.
     Provide a concise (1-2 paragraphs) final recommendation on which vendor is the best option for the company.
+    IMPORTANT: YOUR ENTIRE RESPONSE MUST BE WRITTEN IN INDONESIAN LANGUAGE (BAHASA INDONESIA).
     
     Vendor Data:
     ${vendorDataString}
